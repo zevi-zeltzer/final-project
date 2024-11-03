@@ -21,10 +21,14 @@ const sendEmail = async (email) => {
       },
       body: JSON.stringify({ email }),
     });
-    if (!response.ok) {
-      throw new Error("שגיאה בשליחת דואר אלקטרוני");
+    const result = await response.json();
+    if (response.status === 200 && result.success) {
+      alert("האימייל נשלח בהצלחה");
+    } else {
+      alert("שגיאה בשליחת האימייל"); 
+      throw new Error("שגיאה בשליחת האימייל");
     }
-    return response.json();
+    return result;
   } catch (error) {
       console.error(error);
       }

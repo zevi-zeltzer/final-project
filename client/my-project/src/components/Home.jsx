@@ -1,6 +1,7 @@
 // src/components/Home.js
 import React, { useEffect, useState, useRef } from "react";
 import api from "../services/api";
+import "../styles/home.css";
 
 function Home() {
   const [clients, setClients] = useState([]);
@@ -52,7 +53,7 @@ function Home() {
           <div className="email-form">
             <input
               type="email"
-              placeholder="הזן כתובת דואר אלקטרוני"
+              placeholder="הזן כתובת אימייל "
               ref={inputEmailRef}
               required
             />

@@ -11,10 +11,11 @@ const fetchCustomers = async (req, res) => {
   }
 };
 
-const fetchEmail = (req, res) => {
+const fetchEmail = async (req, res) => {
   try {
     const email = req.body.email;
-    const data = sendEmail(email);
+    console.log(email);
+    const data = await sendEmail(email);//לבדוק למה לא חוזר כלום
     console.log(data);
     res.status(200).json(data);
   } catch (error) {

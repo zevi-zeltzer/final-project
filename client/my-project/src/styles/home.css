@@ -1,0 +1,41 @@
+/* src/styles/Home.css */
+.home {
+    text-align: center;
+    direction: rtl; /* מגדיר את כיוון הטקסט מימין לשמאל */
+  }
+  
+  .clients-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .client-folder {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin: 10px;
+    width: 200px;
+    text-align: center;
+    border-radius: 8px;
+  }
+  
+  .client-folder h3 {
+    margin: 0;
+    font-size: 1.2em;
+  }
+  
+  .client-folder button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border: none;
+    background-color: #007bff;
+    color: #fff;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .client-folder button:hover {
+    background-color: #0056b3;
+  }
+  

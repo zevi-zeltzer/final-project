@@ -1,5 +1,4 @@
 import con from "../config/db.js";
-
 import { promisify } from "util";
 import nodemailer from "nodemailer";
 
@@ -14,30 +13,29 @@ export const getAllCustomers = async () => {
   }
 };
 
-
 const transporter = nodemailer.createTransport({
-    service: "gmail", // אפשר להשתמש בספקי שירותי מיילים אחרים
-    auth: {
-      user: "RZ0548441742@gmail.com", // כתובת המייל שלך
-      pass: "vcdz jigz asnm fsxg", // סיסמת המייל שלך
-    },
-  });
+  service: "gmail", // אפשר להשתמש בספקי שירותי מיילים אחרים
+  auth: {
+    user: "RZ0548441742@gmail.com", // כתובת המייל שלך
+    pass: process.env.EMAIL_PASSWORD, // סיסמת המייל שלך
+  },
+});
 
-
-export const sendEmail = (email) => {
-    const formLink ='https://forms.gle/DbWKN4anZCXDCRYm8';
+export const sendEmail = async (email) => {
+  const formLink = "https://forms.gle/DbWKN4anZCXDCRYm8";
   const mailOptions = {
     from: "RZ0548441742@gmail.com",
     to: email,
-    subject: "Password Reset Request",
-    text:` ${formLink} :שלום לקוח יקר כדי להרשם יש למלאות את הפרטים בקישור המצורף`
+    subject: "הרשמת לקוח",
+    text: ` ${formLink} :שלום לקוח יקר כדי להרשם יש למלאות את הפרטים בקישור המצורף`,
   };
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      return res.status(500).json({ error: "Failed to send email" });
-    } else {
-      res.status(200).json({ message: "Email sent successfully" });
-    }
-  });
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent: " + info.response);
+    return { success: true, response: info.response };
+  } catch (error) {
+    console.log("Error sending email:", error);
+    throw error;
+  }
 };
