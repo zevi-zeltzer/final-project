@@ -19,7 +19,7 @@ const transporter = nodemailer.createTransport({
     service: "gmail", // אפשר להשתמש בספקי שירותי מיילים אחרים
     auth: {
       user: "RZ0548441742@gmail.com", // כתובת המייל שלך
-      pass: "vcdz jigz asnm fsxg", // סיסמת המייל שלך
+    / סיסמת המייל שלך
     },
   });
 
