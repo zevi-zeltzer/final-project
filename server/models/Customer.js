@@ -14,12 +14,21 @@ export const getAllCustomers = async () => {
 };
 
 const transporter = nodemailer.createTransport({
+<<<<<<< HEAD
   service: "gmail", // אפשר להשתמש בספקי שירותי מיילים אחרים
   auth: {
     user: "RZ0548441742@gmail.com", // כתובת המייל שלך
     pass: process.env.EMAIL_PASSWORD, // סיסמת המייל שלך
   },
 });
+=======
+    service: "gmail", // אפשר להשתמש בספקי שירותי מיילים אחרים
+    auth: {
+      user: "RZ0548441742@gmail.com", // כתובת המייל שלך
+    / סיסמת המייל שלך
+    },
+  });
+>>>>>>> 86405f48fbd36ffa9413a60d64b1d686f8a34053
 
 export const sendEmail = async (email) => {
   const formLink = "https://forms.gle/DbWKN4anZCXDCRYm8";
