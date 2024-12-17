@@ -13,7 +13,7 @@ import CustomerHome from "./components/CustomerHome.jsx";
 import ProtectedPages from "./components/ProtectedPages.jsx";
 import Profile from "./components/Profile.jsx";
 import Clients from "./components/Clients.jsx";
-import PhotosClient from "./components/PhotosClient.jsx";
+import PhotosCustomer from "./components/PhotosCustomer.jsx";
 
 function App() {
   return (
@@ -50,7 +50,7 @@ function App() {
             <Route
               exact
               path="/customer/home/:fullName/folder/:folderId/images"
-              element={<PhotosClient />}
+              element={<PhotosCustomer />}
             />
             <Route
               exact

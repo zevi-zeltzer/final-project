@@ -8,6 +8,7 @@ import Paper from "@mui/material/Paper";
 import Modal from "@mui/material/Modal";
 import apiPhotographer from "../services/apiPhotographer";
 import apiCustomers from "../services/apiCustomers";
+import { jwtDecode } from "jwt-decode";
 
 function Login() {
   const usernameRef = useRef();
@@ -74,9 +75,9 @@ function Login() {
 
       if (response.success) {
         setIsTemporaryPasswordVerified(true);
-        alert("הסיסמה הזמנית אומתה בהצלחה.");
+        alert(response.message);
       } else {
-        alert("הסיסמה הזמנית לא נכונה. נסה שוב.");
+        alert(  response.message);
       }
     } catch (error) {
       console.error(error);
@@ -113,7 +114,7 @@ function Login() {
       const data = await apiPhotographer.fetchLogin(username, password);
       const token = data.token;
       if (token) {
-        const user = JSON.parse(atob(token.split(".")[1])); // פענוח המידע מה-token
+        const user = jwtDecode(token);
         if (user.role === "admin") {
           showAdminDashboard();
         } else {
@@ -126,6 +127,13 @@ function Login() {
       console.error(error);
     }
   };
+
+  const handleCancellation  = () => {
+    setForgotPasswordModalOpen(false);
+    setIsTemporaryPasswordSent(false);
+    setTemporaryPassword('');
+    setIsTemporaryPasswordVerified(false);
+  }
 
   return (
     <Box
@@ -317,7 +325,7 @@ function Login() {
                 <Button
                   variant="outlined"
                   color="secondary"
-                  onClick={() => setForgotPasswordModalOpen(false)}
+                  onClick={handleCancellation}
                 >
                   ביטול
                 </Button>
@@ -368,7 +376,7 @@ function Login() {
                 <Button
                   variant="outlined"
                   color="secondary"
-                  onClick={() => setForgotPasswordModalOpen(false)}
+                  onClick={handleCancellation}
                 >
                   ביטול
                 </Button>

@@ -50,8 +50,17 @@ const getFolders = async (req, res) => {
     const arrResult = await Customer.queryGetFolders(userId);
     const arrIdFolders = arrResult.result.map((folder) => folder.id);
     const arrNamesFolders = arrResult.result.map((folder) => folder.folderName);
-    const arrEndFolders = arrResult.result.map((folder) => folder.end_selection);
-    console.log("arrIdFolders111", arrIdFolders, "arrNamesFolders", arrNamesFolders, "arrEndFolders", arrEndFolders);
+    const arrEndFolders = arrResult.result.map(
+      (folder) => folder.end_selection
+    );
+    console.log(
+      "arrIdFolders111",
+      arrIdFolders,
+      "arrNamesFolders",
+      arrNamesFolders,
+      "arrEndFolders",
+      arrEndFolders
+    );
 
     const folderPath = path.join(__dirname, "../imagesCustomers", fullName);
 
@@ -61,8 +70,28 @@ const getFolders = async (req, res) => {
       const files = fs.readdirSync(folderPath);
       console.log(arrIdFolders);
 
-      res.status(200).json({ files, arrIdFolders, arrNamesFolders, arrEndFolders });
+      res
+        .status(200)
+        .json({ files, arrIdFolders, arrNamesFolders, arrEndFolders });
     }
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "שגיאה בקבלת תמונות", error: error.message });
+  }
+};
+
+const getImagesChecked = async (req, res) => {
+  try {
+    const { arrIdFolder } = req.body;
+    console.log("arrIdFolder", arrIdFolder);
+
+    const queryGetImagesChecked = await Customer.queryGetImagesChecked(
+      arrIdFolder
+    );
+    console.log("queryGetImagesChecked", queryGetImagesChecked);
+
+    res.status(200).json(queryGetImagesChecked.countChecked);
   } catch (error) {
     res
       .status(500)
@@ -136,11 +165,28 @@ const checkImage = async (req, res) => {
 
 const editClient = async (req, res) => {
   try {
-    const { username,fullName, phone, email } = req.body;
+    const { username, fullName, phone, email } = req.body;
     const userId = req.userId;
-    console.log("userId", userId, "username", username, "fullName", fullName, "phone", phone, "email", email);
+    console.log(
+      "userId",
+      userId,
+      "username",
+      username,
+      "fullName",
+      fullName,
+      "phone",
+      phone,
+      "email",
+      email
+    );
 
-    const result = await Customer.queryEditClient(userId, username, fullName, phone, email);
+    const result = await Customer.queryEditClient(
+      userId,
+      username,
+      fullName,
+      phone,
+      email
+    );
     res.status(200).json(result);
   } catch (error) {
     res
@@ -152,10 +198,10 @@ const editClient = async (req, res) => {
 const sendEmailVerification = async (req, res) => {
   try {
     const { fullName, userId } = req.query;
-    console.log("fullName", fullName,"userId", userId);
+    console.log("fullName", fullName, "userId", userId);
     const result = await Customer.querySendEmailVerification(fullName, userId);
     console.log("result", result);
-    
+
     res.status(200).json(result);
   } catch (error) {
     res
@@ -164,14 +210,13 @@ const sendEmailVerification = async (req, res) => {
   }
 };
 
-
 const verifyTempPassword = async (req, res) => {
   try {
     const { userId, tempPassword } = req.query;
     console.log("userId", userId, "tempPassword", tempPassword);
     const result = await Customer.queryVerifyTempPassword(userId, tempPassword);
     console.log("result", result);
-    
+
     res.status(200).json(result);
   } catch (error) {
     res
@@ -180,15 +225,23 @@ const verifyTempPassword = async (req, res) => {
   }
 };
 
-
-
 const updatePassword = async (req, res) => {
   try {
-    const { userId, newPassword,oldPassword} =req.query;
-    console.log("userId", userId, "newPassword" ,newPassword ,"oldPassword", oldPassword);
-    const ifVerified = await Customer.queryVerifyOldPassword(userId, oldPassword);
+    const { userId, newPassword, oldPassword } = req.query;
+    console.log(
+      "userId",
+      userId,
+      "newPassword",
+      newPassword,
+      "oldPassword",
+      oldPassword
+    );
+    const ifVerified = await Customer.queryVerifyOldPassword(
+      userId,
+      oldPassword
+    );
     console.log("ifVerified", ifVerified);
-    
+
     if (!ifVerified) {
       return res.status(401).json({ message: "הסיסמה הישנה שגויה." });
     }
@@ -199,7 +252,7 @@ const updatePassword = async (req, res) => {
       .status(500)
       .json({ message: "שגיאה בעדכון הסיסמה", error: error.message });
   }
-};  
+};
 
 const forgotPassword = async (req, res) => {
   try {
@@ -207,14 +260,14 @@ const forgotPassword = async (req, res) => {
     console.log("username", username, "email", email);
     const result = await Customer.queryForgotPassword(username, email);
     console.log("result", result);
-    
+
     res.status(200).json(result);
   } catch (error) {
     res
       .status(500)
       .json({ message: "שגיאה בשליחת הבקשה", error: error.message });
   }
-};  
+};
 
 const changePassword = async (req, res) => {
   try {
@@ -232,6 +285,7 @@ const changePassword = async (req, res) => {
 export default {
   register,
   getFolders,
+  getImagesChecked,
   getImages,
   checkImage,
   editClient,
@@ -239,5 +293,5 @@ export default {
   verifyTempPassword,
   updatePassword,
   forgotPassword,
-  changePassword
+  changePassword,
 };

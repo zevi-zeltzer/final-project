@@ -33,46 +33,48 @@ function CustomerHome() {
   const [foldersEnd, setFoldersEnd] = useState([]);
   const [foldersId, setFoldersId] = useState([]);
   const [openProfile, setOpenProfile] = useState(false);
+  const [countAllImages, setCountAllImages] = useState(0);
 
   useEffect(() => {
     if (!token || !userInfo) {
       navigate("/login");
+      return;
     }
+
     async function fetchShowFolders() {
       try {
-        const response = await apiCustomers.fetchShowFolders(userInfo.fullName, userId);
-        console.log(response.arrNamesFolders);
-        const folders = response.files;
-        const arrIdFolders = response.arrIdFolders;
-        const arrNamesFolders = response.arrNamesFolders;
-        const arrEndFolders = response.arrEndFolders;
-        const id = arrIdFolders[0];
-        const folderName = arrNamesFolders[0];
-        const end = arrEndFolders[0];
-
-        console.log(
-          "foldersName",
-          arrNamesFolders,
-          "arrIdFolders",
-          arrIdFolders
+        const response = await apiCustomers.fetchShowFolders(
+          userInfo.fullName,
+          userId
         );
+        const { arrIdFolders, arrNamesFolders, arrEndFolders } = response;
+
         setFoldersName(arrNamesFolders);
         setFoldersId(arrIdFolders);
         setFoldersEnd(arrEndFolders);
 
-        if (folders.length > 0) {
+        const countChecked = await apiCustomers.fetchImagesChecked(
+          arrIdFolders
+        );
+        setCountAllImages(countChecked);
+
+        // ניווט אוטומטי לתקיה הראשונה אם קיימת
+        if (arrIdFolders.length > 0) {
+          const id = arrIdFolders[0];
+          const folderName = arrNamesFolders[0];
+          const end = arrEndFolders[0];
           navigate(`/customer/home/${userInfo.fullName}/folder/${id}/images`, {
-            state: { folderName: folderName, folderId: id, endFolder: end },
+            state: { folderName, folderId: id, endFolder: end },
           });
         }
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching folders:", error);
       }
     }
+
     fetchShowFolders();
   }, [token]);
 
-  // const pages = ['תיקייה 1', 'תיקייה 2', 'תיקייה 3'];
   const settings = ["פרופיל", "יציאה"];
 
   function ResponsiveAppBar() {
@@ -99,7 +101,11 @@ function CustomerHome() {
       navigate(
         `/customer/home/${userInfo.fullName}/folder/${folderId}/images`,
         {
-          state: { folderName: folderName, folderId: folderId, endFolder: endFolder },
+          state: {
+            folderName: folderName,
+            folderId: folderId,
+            endFolder: endFolder,
+          },
         }
       );
 
@@ -126,7 +132,6 @@ function CustomerHome() {
       <AppBar position="static">
         <Container maxWidth="xl">
           <Toolbar disableGutters>
-            {/* <AdbIcon sx={{ display: { xs: "none", md: "flex" }, mr: 1 }} /> */}
             <Typography
               variant="h6"
               noWrap
@@ -143,8 +148,7 @@ function CustomerHome() {
               <img
                 src="/images/logo.jpg" // יש להחליף בנתיב התמונה שלך
                 alt="logo"
-                style={{ height: "40px",borderRadius: "10%" }} // גובה מותאם אישית
-                
+                style={{ height: "55px", borderRadius: "10%" }} // גובה מותאם אישית
               />
             </Typography>
 
@@ -206,8 +210,7 @@ function CustomerHome() {
               <img
                 src="/images/logo.jpg" // נתיב התמונה שלך
                 alt="logo"
-                style={{ height: "30px",borderRadius:"10%" }} // גובה מותאם למסכים קטנים
-              
+                style={{ height: "30px", borderRadius: "10%" }} // גובה מותאם למסכים קטנים
               />
             </Typography>
 
@@ -223,6 +226,11 @@ function CustomerHome() {
                     color: "white",
                     display: "block",
                     backgroundColor: "#1976D2",
+                    marginRight: "20px",
+                    fontSize: "20px",
+                    fontFamily: "monospace",
+                    fontWeight: "bold",
+                    boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)",
                     "&:hover": {
                       backgroundColor: "#1565C0", // צבע חדש במצב hover
                     },
@@ -232,6 +240,56 @@ function CustomerHome() {
                 </Button>
               ))}
             </Box>
+            {/* מספר התמונות שנבחרו בכללי */}
+            {foldersName.length > 0 && (
+              <Typography
+                variant="h6"
+                title="מספר התמונות שנבחרו בכללי"
+                sx={{
+                  flexGrow: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  backgroundColor: "#1976D2", // צבע רקע
+                  color: "white", // צבע הטקסט
+                  borderRadius: "20px", // פינות מעוגלות
+                  padding: "8px 16px", // מרווחים פנימיים
+                  fontSize: { xs: "18px", md: "20px" }, // גודל משתנה לפי מסך
+                  fontWeight: "bold",
+                  boxShadow: "0px 4px 6px rgba(0, 0, 0, 0.1)", // צל
+                  marginLeft: 2,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                {/* הצגת כיתוב רק במסכים גדולים */}
+                <Box
+                  sx={{
+                    display: { xs: "none", md: "block" }, // הכיתוב מוסתר במסכים קטנים
+                  }}
+                >
+                  מספר התמונות שנבחרו בכללי:
+                </Box>
+                <Box
+                  sx={{
+                    backgroundColor: "#1565C0", // צבע הרקע של העיגול
+                    color: "white",
+                    borderRadius: "50%",
+                    fontSize: { xs: "20px", md: "20px" }, // גודל הטקסט משתנה לפי המסך
+                    fontWeight: "bold",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    marginLeft: "10px", // ריווח קטן
+                    height: "30px", // גובה העיגול
+                    width: "30px", // רוחב העיגול
+                    textAlign: "center",
+                  }}
+                >
+                  {countAllImages}
+                </Box>
+              </Typography>
+            )}
+
             <Box sx={{ flexGrow: 0, display: "flex", alignItems: "center" }}>
               {/* הצגת שם המשתמש */}
               <Typography
@@ -249,7 +307,10 @@ function CustomerHome() {
               {/* אווטאר וכפתור ההגדרות */}
               <Tooltip title="Open settings">
                 <IconButton onClick={handleOpenUserMenu} sx={{ p: 0 }}>
-                  <Avatar alt={userInfo.username} src={`/images/${userInfo.fullName}.png`} />
+                  <Avatar
+                    alt={userInfo.username}
+                    src={`/images/${userInfo.fullName}.png`}
+                  />
                 </IconButton>
               </Tooltip>
               <Menu
@@ -298,7 +359,11 @@ function CustomerHome() {
                   zIndex: 1000,
                 }}
               >
-                <Profile client={userInfo} closeProfile={closeProfile} />
+                <Profile
+                  client={userInfo}
+                  closeProfile={closeProfile}
+                  role="customer"
+                />
               </Box>
             )}
           </Toolbar>
@@ -310,8 +375,12 @@ function CustomerHome() {
   return (
     <div>
       <ResponsiveAppBar />
-     
-      <Outlet />
+
+      {foldersName.length > 0 ? (
+        <Outlet context={{ setCountAllImages }} />
+      ) : (
+        <h1 style={{ textAlign: "center" }}>לא נמצאו תיקיות </h1>
+      )}
     </div>
   );
 }

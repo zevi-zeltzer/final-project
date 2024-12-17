@@ -20,7 +20,6 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import apiCustomers from "../services/apiCustomers";
 import apiPhotographer from "../services/apiPhotographer";
 
-
 function PhotosPhotographer() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -39,6 +38,8 @@ function PhotosPhotographer() {
   const [ifImagesSelected, setIfImagesSelected] = useState(false);
   const [tempImagesNames, setTempImagesNames] = useState([]);
   const [tempImagesPath, setTempImagesPath] = useState([]);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     if (!client) return;
 
@@ -63,6 +64,8 @@ function PhotosPhotographer() {
         } else {
           console.error(error);
         }
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -72,6 +75,23 @@ function PhotosPhotographer() {
       controller.abort();
     };
   }, [folderId, client, folderName]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const checkScroll = () => {
+    setShowScrollTop(window.scrollY > 300);
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", checkScroll);
+    return () => window.removeEventListener("scroll", checkScroll);
+  }, []);
+
+  if (loading) {
+    return <div style={{ textAlign: "center" }}>Loading...</div>;
+  }
 
   const handleImageUpload = async (event) => {
     const file = event.target.files[0];
@@ -122,7 +142,11 @@ function PhotosPhotographer() {
     const imageId = imagesId[imagesId.length - 1 - imageToDelete];
 
     try {
-      const response = await apiPhotographer.fetchImageDelete(imagePath, imageId, folderId);
+      const response = await apiPhotographer.fetchImageDelete(
+        imagePath,
+        imageId,
+        folderId
+      );
       if (response.success) {
         setImagesPath((prev) => prev.filter((_, i) => i !== imageToDelete));
         setImagesName((prev) => prev.filter((_, i) => i !== imageToDelete));
@@ -135,19 +159,6 @@ function PhotosPhotographer() {
       closeDeleteImageDialog();
     }
   };
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const checkScroll = () => {
-    setShowScrollTop(window.scrollY > 300);
-  };
-
-  useEffect(() => {
-    window.addEventListener("scroll", checkScroll);
-    return () => window.removeEventListener("scroll", checkScroll);
-  }, []);
 
   function getFullImagePath(imagePath) {
     return `http://localhost:5000/${
@@ -180,13 +191,12 @@ function PhotosPhotographer() {
     setIfImagesSelected(false);
     setImagesPath(tempImagesPath);
     setImagesName(tempImagesNames);
-    
   };
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        {folderName}
+      <Typography variant="h4" gutterBottom sx={{textAlign: "center" }}>
+        {folderName} / {client.fullName}
       </Typography>
       <Button
         variant="outlined"
@@ -196,44 +206,46 @@ function PhotosPhotographer() {
       >
         חזרה לגלריה
       </Button>
-      {!ifImagesSelected && <Button
-        variant="contained"
-        color="primary"
-        sx={{ marginBottom: 2 }}
-        component="label"
-      >
-        הוספת תמונה
-        <input
-          type="file"
-          accept="image/*"
-          hidden
-          onChange={handleImageUpload}
-        />
-      </Button>}
-      {endFolder === 1 && !ifImagesSelected && (
+      {!ifImagesSelected && (
         <Button
-          size="small"
-          onClick={handleImagesSelect}
           variant="contained"
           color="primary"
-          sx={{ marginLeft: 2 }}
+          sx={{ marginBottom: 2, marginRight: 2 }}
+          component="label"
         >
+          הוספת תמונה
+          <input
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={handleImageUpload}
+          />
+        </Button>
+      )}
+      {endFolder === 1 && !ifImagesSelected && (
+        <Button
+        variant="contained"
+        color="primary"
+        sx={{ marginBottom: 2, marginRight: 2 }}
+        component="label"
+        onClick={handleImagesSelect}
+      >
           הצג תמונות שנבחרו
         </Button>
       )}
       {ifImagesSelected && (
         <Button
-          size="small"
+          
           onClick={handleAlImages}
           variant="contained"
           color="primary"
-          sx={{ marginLeft: 2 }}
+          sx={{ marginBottom: 2, marginRight: 2 }}
         >
           הצג את כל התמונות
         </Button>
       )}
       <Grid container spacing={3} justifyContent="center">
-        {imagesPath.length > 0 ? (
+        {imagesPath.length > 0 &&
           imagesPath.map((image, index) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
               <Card sx={{ position: "relative", width: 350 }}>
@@ -267,12 +279,7 @@ function PhotosPhotographer() {
                 </IconButton>
               </Card>
             </Grid>
-          ))
-        ) : (
-          <Typography variant="body1" color="textSecondary">
-            לא נמצאו תמונות בתיקייה זו.
-          </Typography>
-        )}
+          ))}
       </Grid>
       {showScrollTop && (
         <IconButton

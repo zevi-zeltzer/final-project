@@ -2,34 +2,7 @@ import jsonwebtoken from "jsonwebtoken";
 
 const secretKey = process.env.JWT_SECRET_KEY;
 
-// const verifyToken = (req, res, next) => {
-//   const token = req.headers["authorization"]?.split(" ")[1]; // ציפייה שה-token יישלח בכותרת 'Authorization: Bearer <token>'
-//   console.log("token", token);
-
-//   if (!token) {
-//     return res.status(401).json({ message: "Token not provided" });
-//   }
-
-//   try {
-//     const decoded = jsonwebtoken.verify(token, process.env.JWT_SECRET); // השתמש במפתח הסודי שלך
-//     req.user = decoded; // הוסף מידע על המשתמש לבקשה
-//     console.log("req.user", req.user);
-
-//     next(); // המשך לבקשה הבאה
-//   } catch (error) {
-//     res.status(403).json({ message: "Invalid or expired token" });
-//   }
-// };
-
-const isAdmin = (req, res, next) => {
-  console.log("req.user.role", req.user.role);
-
-  if (req.user.role !== "admin") {
-    return res.status(403).json({ message: "Access denied" });
-  }
-  next();
-};
-
+// Middleware to verify token
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -44,7 +17,8 @@ const verifyToken = (req, res, next) => {
 
   try {
     const decoded = jsonwebtoken.verify(token, secretKey);
-    req.userId = decoded.userId;
+    req.userId = decoded.userId; // Add user ID to the request
+    req.role = decoded.role;    // Add user role to the request
     next();
   } catch (error) {
     return res
@@ -53,4 +27,12 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-export default { verifyToken, isAdmin };
+// Middleware to check if user is an admin
+const verifyAdmin = (req, res, next) => {
+  if (req.role !== "admin") {
+    return res.status(403).json({ message: "Access denied: Admins only" });
+  }
+  next(); // If role is admin, proceed to the next middleware
+};
+
+export default { verifyToken, verifyAdmin };

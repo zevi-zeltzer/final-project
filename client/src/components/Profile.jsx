@@ -9,8 +9,9 @@ import {
   TextField,
 } from "@mui/material";
 import apiCustomers from "../services/apiCustomers";
+import { jwtDecode } from "jwt-decode";
 
-function Profile({ client, closeProfile }) {
+function Profile({ client, closeProfile, role }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedClient, setEditedClient] = useState(client);
   const [userInfo, setUserInfo] = useState(client);
@@ -21,7 +22,7 @@ function Profile({ client, closeProfile }) {
   const [ifSendedEmail, setIfSendedEmail] = useState(false)
   const [confirmPassword, setConfirmPassword] = useState("");
   const token = sessionStorage.getItem("token");
-  const userId = token ? JSON.parse(atob(token.split(".")[1])).userId : null;
+  const userId = token ? jwtDecode(token).userId : null;
   const user = JSON.parse(localStorage.getItem("userInfo"));
   
 
@@ -120,12 +121,17 @@ function Profile({ client, closeProfile }) {
       }}
       elevation={6}
     >
-      {!ifSendedEmail && !verifiedTempPassword && <Typography variant="h6" sx={{ textAlign: "center", fontWeight: "bold" }}>
+      
+      {!ifSendedEmail && !verifiedTempPassword && role === "customer" && <Typography variant="h6" sx={{ textAlign: "center", fontWeight: "bold" }}>
         פרטי הלקוח
+      </Typography>}
+      {!ifSendedEmail && !verifiedTempPassword && role === "photographer" && <Typography variant="h6" sx={{ textAlign: "center", fontWeight: "bold" }}>
+        פרטי הצלם
       </Typography>}
       {ifSendedEmail  && <Typography variant="h6" sx={{ textAlign: "center", fontWeight: "bold" }}>
       עדכון סיסמה
       </Typography>}
+
 
       {ifSendedEmail && !verifiedTempPassword && (
         <Box
@@ -300,9 +306,9 @@ function Profile({ client, closeProfile }) {
                 ערוך פרופיל
               </Button>
             )}
-            <Button variant="outlined" color="secondary" onClick={() => closeProfile()}>
+            {role === "customer" && <Button variant="outlined" color="secondary" onClick={() => closeProfile()}>
               סגור
-            </Button>
+            </Button>}
           </>
         )}
       </Box>

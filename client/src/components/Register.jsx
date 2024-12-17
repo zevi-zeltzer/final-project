@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import "../styles/register.css";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
@@ -49,10 +48,13 @@ function Register() {
 
       console.log(data);
 
-      if (data === 200) {
+      if (data.status === 200) {
         navigate("/login");
-      } else {
-        setError(data.message);
+      } else if (data.status === 409) {
+        setError("שם המשתמש כבר קיים");
+      }
+      else {
+        setError("שגיאה בהרשמה: שם המשתמש כבר קיים או שיש בעיה בשרת");
       }
     } catch (error) {
       console.error(error);

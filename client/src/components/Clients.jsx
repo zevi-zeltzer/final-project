@@ -36,9 +36,16 @@ function Clients() {
 
   useEffect(() => {
     const fetchClients = async () => {
-      const data = await apiPhotographer.fetchGetCustomers();
-      setClients(data);
-      setLoading(false);
+      try {
+        const data = await apiPhotographer.fetchGetCustomers();
+        console.log(data);
+        
+        setClients(data);
+      } catch (error) {
+        console.error("Error fetching clients:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchClients();
   }, []);
@@ -59,11 +66,12 @@ function Clients() {
   }
 
   // פונקציה לסינון הלקוחות לפי מילת החיפוש
-  let filteredClients=[];
-  if(clients) {filteredClients = clients.filter(
+  let filteredClients = [];
+if (clients && Array.isArray(clients)) {
+  filteredClients = clients.filter(
     (client) =>
-      client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase())
+      client.fullName.toLowerCase().includes(searchTerm.toLowerCase()) 
+    // ||client.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 }
   const ViewGallery = (client) => {
@@ -77,6 +85,13 @@ function Clients() {
     try {
       const data = await apiPhotographer.fetchSendEmail(email);
       console.log(data);
+      if (data.success) {
+        alert("האימייל נשלח בהצלחה");
+        setAddClient(false);
+      } else {
+        alert("שגיאה בשליחת האימייל");
+        throw new Error("שגיאה בשליחת האימייל");
+      }
     } catch (error) {
       console.error(error);
     }
@@ -97,10 +112,13 @@ function Clients() {
 
   const handleDeleteClient = async () => {
     try {
-      await apiPhotographer.fetchDeleteCustomer(clientToDelete.id); // קריאה ל-API למחיקת הלקוח
+      const data = await apiPhotographer.fetchDeleteCustomer(clientToDelete.id); // קריאה ל-API למחיקת הלקוח
+      console.log(data);
+      
       setClients(clients.filter((c) => c.id !== clientToDelete.id)); // עדכון הלקוחות
       setOpenDeleteDialog(false);
       setClientToDelete(null);
+      alert("הלקוח נמחק בהצלחה.");
     } catch (error) {
       console.error("Error deleting client:", error);
     }
@@ -109,7 +127,7 @@ function Clients() {
   return (
     <Box sx={{ padding: 4 }}>
       {/* שורת חיפוש */}
-      {clients.length > 0 && (
+      {clients && clients.length > 0 && (
         <Box sx={{ mb: 3 }}>
           <TextField
             label="חפש לקוח"
@@ -225,13 +243,13 @@ function Clients() {
             zIndex: 1000,
           }}
         >
-          <Profile client={selectedClient} closeProfile={closeProfile} />
+          <Profile client={selectedClient} closeProfile={closeProfile} role="customer" />
         </Box>
       )}
 
       {/* הצגת הלקוחות */}
       <Grid container spacing={3}>
-        {clients.length > 0 && filteredClients &&
+        {clients && clients.length > 0 && filteredClients &&
           filteredClients.map((client) => (
             <Grid item xs={12} sm={6} md={4} key={client.id}>
               <Card

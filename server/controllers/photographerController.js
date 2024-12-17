@@ -52,7 +52,7 @@ const getCustomers = async (req, res) => {
   try {
     const queryCustomers = await photographer.queryGetCustomers();
     console.log(queryCustomers);
-    
+
     res.status(200).json(queryCustomers);
   } catch (error) {
     res
@@ -61,19 +61,31 @@ const getCustomers = async (req, res) => {
   }
 };
 
-
 const deleteCustomer = async (req, res) => {
   try {
     const { id } = req.query;
+    console.log(id);
+    
     const data = await photographer.queryDeleteCustomer(id);
+
     console.log(data);
-    res.status(200).json(data);
+
+    if (!data.success) {
+      return res.status(400).json({ message: "Error deleting customer" });
+    }
+
+    const customerFolder = path.join(__dirname, "../imagesCustomers", data.fullName);
+    if (fs.existsSync(customerFolder)) {
+      fs.rmdirSync(customerFolder, { recursive: true });
+    }
+
+    res.status(200).json({ message: "Customer deleted successfully" });
   } catch (error) {
     res
       .status(500)
       .json({ message: "Error deleting customer", error: error.message });
   }
-}
+};
 
 const sendEmail = async (req, res) => {
   try {
@@ -216,7 +228,6 @@ const imageUpload = async (req, res) => {
   }
 };
 
-
 const deleteFolder = async (req, res) => {
   try {
     const { folderId, fullName, folderName } = req.body;
@@ -227,6 +238,9 @@ const deleteFolder = async (req, res) => {
     const DBDeleteFolder = await photographer.queryDeleteFolder(folderId);
 
     console.log(DBDeleteFolder);
+    if (!DBDeleteFolder.success) {
+      res.status(401).json(DBDeleteFolder);
+    }
 
     function isHebrewFolderName(folderName) {
       const hebrewRegex = /[\u0590-\u05FF]/; // טווח התווים של עברית ב- Unicode

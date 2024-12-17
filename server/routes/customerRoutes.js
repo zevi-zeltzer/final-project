@@ -7,7 +7,9 @@ import auth from "../middleware/auth.js";
 
 router.post("/customers/register", customerController.register);
 
-router.get("/customers/getFolders/:fullName" , auth.verifyToken,customerController.getFolders);
+router.get("/customers/getFolders/:fullName" , auth.verifyToken, customerController.getFolders);
+
+router.post("/customers/getImagesChecked", auth.verifyToken, customerController.getImagesChecked);
 
 router.post("/customers/getImages", auth.verifyToken, customerController.getImages);
 

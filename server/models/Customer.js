@@ -4,6 +4,14 @@ import nodemailer from "nodemailer";
 import bcryptjs from "bcryptjs";
 const query = promisify(con.query).bind(con);
 
+const transporter = nodemailer.createTransport({
+  service: "gmail", // אפשר להשתמש בספקי שירותי מיילים אחרים
+  auth: {
+    user: "libiphotographs@gmail.com", // כתובת המייל שלך
+    pass: process.env.EMAIL_PASSWORD, // סיסמת המייל שלך
+  },
+});
+
 const queryRegister = async (
   username,
   hashedPassword,
@@ -28,6 +36,18 @@ const queryRegister = async (
       "INSERT INTO customers (username, password, email, phone, fullName) VALUES (?, ?, ?, ?, ?)",
       [username, hashedPassword, email, phone, fullName]
     );
+
+    const mailOptions = {
+      from: "libiphotographs@gmail.com",
+      to: "libiphotographs@gmail.com",
+      subject: "משתמש נרשם למערכת בהצלחה",
+      html: `
+          <div dir="rtl" style="text-align: right; font-family: Arial, sans-serif;">
+            <h1>${fullName} נרשם/ה למערכת בהצלחה</h1>
+          </div>
+        `,
+    };
+    await transporter.sendMail(mailOptions);
     return { success: true, result };
   } catch (err) {
     console.error("Database error:", err);
@@ -45,6 +65,30 @@ const queryGetFolders = async (userId) => {
     console.log("result", result);
 
     return { result };
+  } catch (err) {
+    throw new Error(`Database query failed: ${err.message}`);
+  }
+};
+
+const queryGetImagesChecked = async (arrIdFolder) => {
+  let countChecked = 0;
+  try {
+    for (let i = 0; i < arrIdFolder.length; i++) {
+      const result = await query(
+        "SELECT checked FROM images WHERE folderId = ? and checked = 1",
+        [arrIdFolder[i]]
+      );
+      if (result.length > 0) {
+        for (let j = 0; j < result.length; j++) {
+          if (result[j].checked === 1) {
+            countChecked += 1;
+          }
+        }
+      }
+    }
+    console.log("countChecked", countChecked);
+
+    return { countChecked };
   } catch (err) {
     throw new Error(`Database query failed: ${err.message}`);
   }
@@ -108,14 +152,6 @@ const queryEditClient = async (userId, username, fullName, phone, email) => {
   }
 };
 
-const transporter = nodemailer.createTransport({
-  service: "gmail", // אפשר להשתמש בספקי שירותי מיילים אחרים
-  auth: {
-    user: "libiphotographs@gmail.com", // כתובת המייל שלך
-    pass: process.env.EMAIL_PASSWORD, // סיסמת המייל שלך
-  },
-});
-
 const randomPassword = () => {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -130,8 +166,8 @@ const randomPassword = () => {
 const queryStoreTemporaryPassword = async (userId) => {
   const password = randomPassword();
   const expirationTime = new Date();
-  expirationTime.setMinutes(expirationTime.getMinutes() + 30); // סיסמה תפוג אחרי 30 דקות
-  
+  expirationTime.setMinutes(expirationTime.getMinutes() + 5); // סיסמה תפוג אחרי 30 דקות
+
   try {
     // עדכון ה-DB עם הסיסמה הזמנית
     const result = await query(
@@ -167,7 +203,8 @@ const querySendEmailVerification = async (fullName, userId) => {
             <h1>שלום ${fullName}</h1>
             <p>
               הופקה עבורך סיסמה חד פעמית לאימות משתמש.<br>
-              הסיסמה שלך היא: <strong>${password}</strong>
+              הסיסמה שלך היא: <strong>${password}</strong><br>
+              הסיסמה תפוג אחרי 5 דקות.<br>
             </p>
           </div>
         `,
@@ -184,7 +221,7 @@ const querySendEmailVerification = async (fullName, userId) => {
 
 const queryVerifyTempPassword = async (userId, tempPassword) => {
   console.log("userId", userId, "tempPassword", tempPassword);
-  
+
   try {
     // קבלת הסיסמה הזמנית וזמן תפוגה מה-DB
     const result = await query(
@@ -198,6 +235,13 @@ const queryVerifyTempPassword = async (userId, tempPassword) => {
 
     const { temporaryPassword, expirationTime } = result[0];
 
+    console.log(
+      "temporaryPassword",
+      temporaryPassword,
+      "expirationTime",
+      expirationTime
+    );
+
     // השוואת הסיסמה שהוזנה עם זו ששמרנו ב-DB
     if (tempPassword !== temporaryPassword) {
       return { success: false, message: "סיסמה לא נכונה" };
@@ -206,6 +250,7 @@ const queryVerifyTempPassword = async (userId, tempPassword) => {
     // בדיקת אם הסיסמה עדיין בתוקף
     const currentTime = new Date();
     if (new Date(expirationTime) < currentTime) {
+      await query("DELETE FROM temporary_passwords WHERE userId = ?", [userId]);
       return { success: false, message: "הסיסמה פגה" };
     }
 
@@ -216,7 +261,7 @@ const queryVerifyTempPassword = async (userId, tempPassword) => {
   } catch (err) {
     throw new Error(`Database query failed: ${err.message}`);
   }
-}
+};
 
 const queryVerifyOldPassword = async (userId, password) => {
   console.log("userId", userId, "password", password);
@@ -275,13 +320,14 @@ const queryForgotPassword = async (username, email) => {
             <h1>שלום ${fullName}</h1>
             <p>
               הופקה עבורך סיסמה חד פעמית לאימות משתמש.<br>
-              הסיסמה שלך היא: <strong>${password}</strong>
+              הסיסמה שלך היא: <strong>${password}</strong><br>
+              הסיסמה תפוג אחרי 5 דקות.<br>
             </p>
           </div>
         `,
     };
-    await transporter.sendMail(mailOptions)
-    return { success: true, message: "האימייל נשלח בהצלחה",userId };
+    await transporter.sendMail(mailOptions);
+    return { success: true, message: "האימייל נשלח בהצלחה", userId };
   } catch (err) {
     throw new Error(`Database query failed: ${err.message}`);
   }
@@ -291,6 +337,7 @@ export default {
   queryRegister,
   queryGetImages,
   queryGetFolders,
+  queryGetImagesChecked,
   queryCheckImage,
   queryEditClient,
   querySendEmailVerification,

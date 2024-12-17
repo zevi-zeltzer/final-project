@@ -1,4 +1,3 @@
-const token = sessionStorage.getItem("token");
 
 const fetchLogin = async (username, password) => {
   try {
@@ -35,6 +34,9 @@ const fetchLogin = async (username, password) => {
 
 
 const fetchGetCustomers = async () => {
+  const token = sessionStorage.getItem("token");
+  
+  if (token) {
   try {
     const response = await fetch(
       "http://localhost:5000/api/photographer/getCustomers",
@@ -53,10 +55,12 @@ const fetchGetCustomers = async () => {
     return response.json();
   } catch (error) {
     console.error(error);
-  }
+  }}
 };
 
 const fetchDeleteCustomer = async (id) => {
+  const token = sessionStorage.getItem("token");
+
   try {
     const response = await fetch(
       `http://localhost:5000/api/photographer/deleteCustomer/?id=${id}`,
@@ -78,6 +82,8 @@ const fetchDeleteCustomer = async (id) => {
 };
 
 const fetchSendEmail = async (email) => {
+  const token = sessionStorage.getItem("token");
+
   try {
     const response = await fetch(
       "http://localhost:5000/api/photographer/send-email",
@@ -91,12 +97,7 @@ const fetchSendEmail = async (email) => {
       }
     );
     const result = await response.json();
-    if (response.status === 200 && result.success) {
-      alert("האימייל נשלח בהצלחה");
-    } else {
-      alert("שגיאה בשליחת האימייל");
-      throw new Error("שגיאה בשליחת האימייל");
-    }
+    
     return result;
   } catch (error) {
     console.error(error);
@@ -104,6 +105,8 @@ const fetchSendEmail = async (email) => {
 };
 
 const fetchFoldersUpload = async (formData, client, folderName) => {
+  const token = sessionStorage.getItem("token");
+
   console.log("formData", formData);
   console.log("client", client);
 
@@ -119,7 +122,7 @@ const fetchFoldersUpload = async (formData, client, folderName) => {
       }
     );
     const result = await response.json();
-    console.log("result", result.folderId[0].id);
+    
 
     if (response.ok) {
       alert("התייקיה נשלחה בהצלחה!");
@@ -134,6 +137,8 @@ const fetchFoldersUpload = async (formData, client, folderName) => {
 };
 
 const fetchImageUpload = async (formData, client, folderId, folderName) => {
+  const token = sessionStorage.getItem("token");
+
   console.log("formData", formData);
   console.log("client", client);
 
@@ -164,7 +169,9 @@ const fetchImageUpload = async (formData, client, folderId, folderName) => {
 
 
 const fetchDeleteFolder = async (fullName, folderName, folderId) => {
-  console.log("folderId", folderId);
+  const token = sessionStorage.getItem("token");
+
+  console.log("folderId-----", folderId);
 
   try {
     const response = await fetch(
@@ -194,6 +201,8 @@ const fetchDeleteFolder = async (fullName, folderName, folderId) => {
 
 
 const fetchEndSelection = async (fullName, folderName, folderId) => {
+  const token = sessionStorage.getItem("token");
+
   try {
     const response = await fetch(
       `http://localhost:5000/api/photographer/endSelection`,
@@ -219,6 +228,8 @@ const fetchEndSelection = async (fullName, folderName, folderId) => {
 };
 
 const fetchImageDelete = async (imagePath, imageId, folderId) => {
+  const token = sessionStorage.getItem("token");
+
   try {
     const response = await fetch(
       `http://localhost:5000/api/photographer/deleteImage`,

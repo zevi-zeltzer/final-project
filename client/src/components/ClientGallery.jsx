@@ -19,7 +19,6 @@ import { faTrash } from "@fortawesome/free-solid-svg-icons";
 import apiPhotographer from "../services/apiPhotographer";
 import apiCustomers from "../services/apiCustomers";
 
-
 function ClientGallery() {
   const location = useLocation();
   const client = location.state?.client;
@@ -28,6 +27,7 @@ function ClientGallery() {
   const [arrEndFolders, setArrEndFolders] = useState([]);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // ניהול פתיחת הדיאלוג
   const [folderToDelete, setFolderToDelete] = useState(null); // שמירת תיקייה למחיקה
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -38,24 +38,35 @@ function ClientGallery() {
 
     const fetchShowFolders = async () => {
       try {
-        const response = await apiCustomers.fetchShowFolders(client.fullName, client.id);
+        const response = await apiCustomers.fetchShowFolders(
+          client.fullName,
+          client.id
+        );
         setFoldersName(response.arrNamesFolders);
         setFoldersId(response.arrIdFolders);
         setArrEndFolders(response.arrEndFolders);
-        
       } catch (error) {
         console.error(error);
+      } finally {
+        setLoading(true);
       }
     };
 
     fetchShowFolders();
-    
   }, [client]);
 
   if (!client) {
     return (
       <Typography variant="h6" color="error">
         לא נמצאו נתונים עבור הלקוח.
+      </Typography>
+    );
+  }
+
+  if (!loading) {
+    return (
+      <Typography variant="h6" color="error">
+        טוען תיקיות...
       </Typography>
     );
   }
@@ -70,10 +81,12 @@ function ClientGallery() {
 
   const handleFolderUpload = async (event) => {
     const folder = event.target.files;
+    console.log(folder);
 
     const formData = new FormData();
     const firstFolderPath = folder[0].webkitRelativePath || folder[0].name;
     const folderName = firstFolderPath.split("/")[0];
+    console.log(folderName);
 
     formData.append("folderName", folderName);
     formData.append("userId", client.id);
@@ -97,7 +110,7 @@ function ClientGallery() {
         setFoldersName((prevFolders) => [...prevFolders, folderName]); // הוספת תיקייה חדשה ל-state
         setFoldersId((prevIds) => [
           ...prevIds,
-          { name: folderName, id: foldersUploaded.folderId[0].id }, // הוספת מזהה התיקייה ל-state
+          foldersUploaded.folderId[0], // הוספת מזהה התיקייה ל-state
         ]);
       }
     } catch (error) {
@@ -143,6 +156,7 @@ function ClientGallery() {
     // הסרה מיידית של התיקייה מהסטייט
     const updatedFolders = foldersName.filter((_, i) => i !== index);
     setFoldersName(updatedFolders);
+    arrEndFolders.splice(index, 1);
     closeDeleteFolderDialog(); // סגירת הדיאלוג
 
     // שליחת בקשה לשרת למחיקת התיקייה
@@ -150,8 +164,10 @@ function ClientGallery() {
       const response = await apiPhotographer.fetchDeleteFolder(
         client.fullName,
         folderName,
-        foldersId[index].id
+        foldersId[index]
       );
+      console.log("response.success", response.success);
+
       if (!response.success) {
         console.error("שגיאה במחיקת התיקייה");
         // שחזור התיקייה במקרה של שגיאה
@@ -168,7 +184,7 @@ function ClientGallery() {
 
   return (
     <Box sx={{ padding: 4 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom align="center">
         גלריה עבור {client.fullName}
       </Typography>
 
@@ -183,14 +199,22 @@ function ClientGallery() {
           webkitdirectory="true"
         />
         <label htmlFor="file-upload">
-          <Button variant="contained" component="span" color="primary">
+        <Button
+          variant="outlined"
+          color="secondary"
+          onClick={() => navigate("/photographer/home/clients")}
+          
+        >
+          חזרה ללקוחות
+        </Button>
+          <Button variant="contained" component="span" color="primary" sx={{ marginRight: 2 }}>
             העלאת תיקיות
           </Button>
         </label>
       </Box>
 
       <Grid container spacing={3}>
-        {foldersName.length > 0 ? (
+        {foldersName.length > 0 &&
           foldersName.map((folder, index) => (
             <Grid item xs={12} sm={6} md={4} key={index}>
               <Card
@@ -235,7 +259,7 @@ function ClientGallery() {
                   <Button
                     size="small"
                     onClick={() =>
-                      handleImagesShow(folder, index, foldersId[index].id)
+                      handleImagesShow(folder, index, foldersId[index])
                     }
                     variant="contained"
                     color="primary"
@@ -257,12 +281,7 @@ function ClientGallery() {
                 </CardActions>
               </Card>
             </Grid>
-          ))
-        ) : (
-          <Typography variant="body1" color="textSecondary">
-            לא נמצאו תיקיות להצגה.
-          </Typography>
-        )}
+          ))}
       </Grid>
 
       {/* Dialog לאישור מחיקה */}

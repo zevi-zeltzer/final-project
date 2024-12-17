@@ -61,10 +61,28 @@ const queryGetCustomers = async () => {
 
 const queryDeleteCustomer = async (id) => {
   try {
+    const result1 = await query(
+      "SELECT * FROM folders WHERE userId = ?",
+      [id]
+    )
+    const result2 = await query(
+      "SELECT fullName FROM customers WHERE id = ?",
+      [id]
+    )
+    const fullName = result2[0].fullName
+    const foldersId = result1.map(folder => folder.id)
+    console.log("foldersId", foldersId);
+
+    for (const folderId of foldersId) {
+      await query("DELETE FROM images WHERE folderId = ?", [folderId]);
+      await query("DELETE FROM folders WHERE id = ?", [folderId]);
+    }
+    
+    
     const result = await query("DELETE FROM customers WHERE id = ?", [id]);
     console.log("result", result);
 
-    return result;
+    return {success: true, message: "Customer deleted successfully", fullName };
   } catch (err) {
     throw new Error(`Database query failed: ${err.message}`);
   }
@@ -121,40 +139,52 @@ const sendingEmail = async (email) => {
 
 const querySaveFolder = async (fullName, folderName) => {
   try {
+    // שליפת מזהה המשתמש על פי שם מלא
     const userIdResult = await query(
-      "SELECT id FROM customers WHERE fullName = ?",
+      "SELECT id FROM customers WHERE fullName = ?", 
       [fullName]
     );
-
     const userId = userIdResult[0].id;
 
-    const existingFolder = await query(
-      "SELECT id FROM folders WHERE userId = ? AND folderName = ?",
+    // בדיקה אם התיקיה קיימת
+    const existentFolder = await query(
+      "SELECT id FROM folders WHERE userId = ? AND folderName = ?", 
       [userId, folderName]
     );
 
-    if (existingFolder.length > 0) {
-      throw new Error("A folder with this name already exists for this user.");
+    // אם התיקיה קיימת, נחזור עם שגיאה
+    if (existentFolder.length > 0) {
+      return { 
+        success: false, 
+        message: "תיקיה בשם זה כבר קיימת עבור משתמש זה." 
+      };
     }
 
+    // הוספת תיקיה חדשה לבסיס הנתונים
     await query(
-      "INSERT INTO folders (userId, folderName,end_selection) VALUES (?, ?, ?)",
+      "INSERT INTO folders (userId, folderName, end_selection) VALUES (?, ?, ?)", 
       [userId, folderName, 0]
     );
 
-    const folderId = await query(
-      "SELECT id FROM folders WHERE userId = ? AND folderName = ?",
+    // שליפת מזהה התיקיה החדשה
+    const folderIdResult = await query(
+      "SELECT id FROM folders WHERE userId = ? AND folderName = ?", 
       [userId, folderName]
     );
 
-    return {
-      success: true,
-      message: "Folder saved successfully",
-      folderId,
-      userId,
+    // החזרת תוצאה עם הצלחה
+    return { 
+      success: true, 
+      message: "תיקיה נשמרה בהצלחה", 
+      folderId: folderIdResult[0].id, 
+      userId, 
     };
   } catch (err) {
-    throw new Error(`Database query failed: ${err.message}`);
+    // טיפול בשגיאות
+    return { 
+      success: false, 
+      message: `Database query failed: ${err.message}` 
+    };
   }
 };
 
@@ -208,9 +238,10 @@ const queryGetImagesNames = async (folderId) => {
 };
 
 const queryDeleteFolder = async (folderId) => {
+  console.log("folderId", folderId);
   try {
-    await query("DELETE FROM folders WHERE id = ?", [folderId]);
     await query("DELETE FROM images WHERE folderId = ?", [folderId]);
+    await query("DELETE FROM folders WHERE id = ?", [folderId]);
     return { success: true, message: "Folder deleted successfully" };
   } catch (err) {
     throw new Error(`Database query failed: ${err.message}`);

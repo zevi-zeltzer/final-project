@@ -1,4 +1,3 @@
-const token = sessionStorage.getItem("token");
 
 const fetchRegister = async (username, password, email, phone, fullName) => {
   try {
@@ -17,17 +16,18 @@ const fetchRegister = async (username, password, email, phone, fullName) => {
       }
     );
     console.log(response.status);
-
     const data = await response.json();
+
+   
     if (response.ok) {
       alert("ההרשמה בוצעה בהצלחה!");
     } else {
       // הצגת הודעת שגיאה מהשרת אם קיימת, אחרת הצגת הודעה כללית
       alert(
-        data.message || "שגיאה בהרשמה: שם המשתמש כבר קיים או שיש בעיה בשרת"
+       "שגיאה בהרשמה: שם המשתמש כבר קיים או שיש בעיה בשרת"
       );
     }
-    return response.status;
+    return response;
   } catch (error) {
     console.error(error);
     alert("אירעה שגיאה בביצוע ההרשמה. אנא נסה שוב מאוחר יותר.");
@@ -35,6 +35,8 @@ const fetchRegister = async (username, password, email, phone, fullName) => {
 };
 
 const fetchShowFolders = async (fullName, userId) => {
+  const token = sessionStorage.getItem("token");
+
   console.log("fullName", fullName);
   try {
     const response = await fetch(
@@ -58,7 +60,37 @@ const fetchShowFolders = async (fullName, userId) => {
   }
 };
 
+const fetchImagesChecked = async (arrIdFolder) => {
+  const token = sessionStorage.getItem("token");
+
+  console.log("arrIdFolder", arrIdFolder);
+  try {
+    const response = await fetch(
+      `http://localhost:5000/api/customers/getImagesChecked`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ arrIdFolder }),
+      }
+    );
+    if (!response.ok) {
+      throw new Error("שגיאה בשליפת המסומנים");
+    }
+    const data = await response.json();
+    console.log("dataImagesChecked", data);
+
+    return data;
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 const fetchShowImages = async (fullName, folderName, folderId) => {
+  const token = sessionStorage.getItem("token");
+
   console.log("fullName", fullName, "folderId11", folderId);
   try {
     const response = await fetch(
@@ -85,6 +117,7 @@ const fetchShowImages = async (fullName, folderName, folderId) => {
 };
 
 const fetchCheckImage = async (imageId, ifChecked) => {
+  
   const token = sessionStorage.getItem("token");
   console.log(token);
   try {
@@ -108,6 +141,8 @@ const fetchCheckImage = async (imageId, ifChecked) => {
 };
 
 const saveClientEditing = async (editedClient) => {
+  const token = sessionStorage.getItem("token");
+
   try {
     const response = await fetch(
       `http://localhost:5000/api/customers/editClient`,
@@ -133,6 +168,8 @@ const saveClientEditing = async (editedClient) => {
 };
 
 const fetchEmailVerification = async (fullName,  userId) => {
+  const token = sessionStorage.getItem("token");
+
   try {
     const response = await fetch(
       `http://localhost:5000/api/customers/sendEmailVerification?fullName=${fullName}&userId=${userId}`,
@@ -184,6 +221,8 @@ const verifyTempPassword = async (userId, tempPassword) => {
 
 
 const updatePassword = async (userId,oldPassword, newPassword) => {
+  const token = sessionStorage.getItem("token");
+
   try {
     const response = await fetch(
       `http://localhost:5000/api/customers/updatePassword?userId=${userId}&newPassword=${newPassword}&oldPassword=${oldPassword}`,
@@ -263,6 +302,7 @@ const changePassword = async (userId, newPassword) => {
 export default {
   fetchRegister,
   fetchShowFolders,
+  fetchImagesChecked,
   fetchShowImages,
   fetchCheckImage,
   saveClientEditing,

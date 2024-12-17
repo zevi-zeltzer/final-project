@@ -9,8 +9,6 @@ import {
   Container,
   Avatar,
   IconButton,
-  Card,
-  CardContent,
   Popover,
 } from "@mui/material";
 import { useNavigate, Outlet } from "react-router-dom";
@@ -19,13 +17,16 @@ import Profile from "./Profile";
 function PhotographerHome() {
   const navigate = useNavigate();
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+  
 
-  const [anchorEl, setAnchorEl] = useState(null); // סטייט למיקום הפופובר
-  const [openProfile, setOpenProfile] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null); // State for Popover anchor
+  const handleClickProfile = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget); // Toggle the popover
+  };
 
-  useEffect(() => {
-    navigate("/photographer/home/clients");
-  }, []);
+  const closeProfile = () => {
+    setAnchorEl(null); // Close the popover
+  };
 
   const logout = () => {
     sessionStorage.removeItem("token");
@@ -37,18 +38,9 @@ function PhotographerHome() {
     navigate("/photographer/home/clients");
   };
 
-  const handleClickProfile = (event) => {
-    // אם הפופובר פתוח, נסגור אותו; אחרת, נפתח אותו
-    if (anchorEl) {
-      setAnchorEl(null);
-    } else {
-      setAnchorEl(event.currentTarget);
-    }
-  };
-
-  const closeProfile = () => {
-    setAnchorEl(null);
-  };
+  useEffect(() => {
+    navigate("/photographer/home/clients");
+  }, []);
 
   return (
     <Box sx={{ padding: 2 }}>
@@ -86,11 +78,11 @@ function PhotographerHome() {
             <Box
               sx={{
                 display: "flex",
-                gap: 2.5, // רווח גדול יותר בין הכפתורים
-                marginRight: "auto", // מזיז את הכפתורים לצד שמאל
+                gap: 2.5,
+                marginRight: "auto",
               }}
             >
-              <Button
+              {/* <Button
                 onClick={handleClients}
                 color="inherit"
                 variant="outlined"
@@ -99,7 +91,7 @@ function PhotographerHome() {
                 }}
               >
                 הלקוחות שלי
-              </Button>
+              </Button> */}
 
               <Button
                 onClick={logout}
@@ -111,7 +103,7 @@ function PhotographerHome() {
               >
                 יציאה
               </Button>
-              <Tooltip title="Open profile" sx={{ display: "flex" }}>
+              <Tooltip title="Open profile">
                 <IconButton onClick={handleClickProfile} sx={{ p: 0 }}>
                   <Avatar
                     src={`/images/${userInfo.fullName}.jpg`}
@@ -124,47 +116,30 @@ function PhotographerHome() {
         </Container>
       </AppBar>
 
-      {/* פופובר להצגת פרופיל */}
+      {/* Popover for Profile */}
       <Popover
         open={Boolean(anchorEl)}
         anchorEl={anchorEl}
-        onClose={() => setAnchorEl(null)} // סוגר את הפופובר כאשר לוחצים מחוץ לו
+        onClose={closeProfile}
         anchorOrigin={{
           vertical: "bottom",
-          horizontal: "center",
+          horizontal: "center", // ממורכז למסכים קטנים
         }}
         transformOrigin={{
           vertical: "top",
-          horizontal: "center",
+          horizontal: "center", // ממורכז למסכים קטנים
         }}
-        sx={{
-          width: 300, // רוחב המינימלי
-          maxWidth: 400, // מקסימום רוחב
-          position: "absolute", // מיקום קבוע
-          top: "3%", // גובה מהקצה העליון של המסך
-          right: "80%", // המרחק מצד ימין של המסך
-          zIndex: 1000,
-          "& .MuiPopover-paper": {
-            borderRadius: 3,
-            overflow: "hidden",
+        PaperProps={{
+          style: {
+            borderRadius: "8px",
+            minWidth: "280px", // מינימום רוחב למסכים קטנים
+            maxWidth: "90vw", // 90% מרוחב המסך
+            overflow: "auto", // גלילה במקרה של תוכן גדול
           },
         }}
       >
-        <Box
-          sx={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)", // מעומם את הרקע
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            zIndex: 1000,
-          }}
-        >
-          <Profile client={userInfo} closeProfile={closeProfile} />
+        <Box sx={{ padding: 2 }}>
+          <Profile client={userInfo} closeProfile={closeProfile} role="photographer"  />
         </Box>
       </Popover>
 
