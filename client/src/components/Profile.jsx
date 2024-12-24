@@ -7,6 +7,8 @@ import {
   Button,
   Paper,
   TextField,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import apiCustomers from "../services/apiCustomers";
 import { jwtDecode } from "jwt-decode";
@@ -15,27 +17,30 @@ function Profile({ client, closeProfile, role }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedClient, setEditedClient] = useState(client);
   const [userInfo, setUserInfo] = useState(client);
-  const [tempPassword, setTempPassword] = useState(""); // שמירת הסיסמה הזמנית שהמשתמש מזין
-  const [verifiedTempPassword, setVerifiedTempPassword] = useState(false); // בדיקת אימות של הסיסמה הזמנית
-  const [newPassword, setNewPassword] = useState(""); // שמירת הסיסמה החדשה
-  const [oldPassword, setOldPassword] = useState(""); // שמירת הסיסמה הישנה
-  const [ifSendedEmail, setIfSendedEmail] = useState(false)
+  const [tempPassword, setTempPassword] = useState("");
+  const [verifiedTempPassword, setVerifiedTempPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [ifSendedEmail, setIfSendedEmail] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "" });
+
   const token = sessionStorage.getItem("token");
   const userId = token ? jwtDecode(token).userId : null;
   const user = JSON.parse(localStorage.getItem("userInfo"));
-  
 
   const handleEditClick = () => {
     setIsEditing(true);
   };
 
   const handleSaveClick = async () => {
-    const edit = await apiCustomers.saveClientEditing(editedClient); // שמירה של הפרטים החדשים
-    console.log(edit);
+    const edit = await apiCustomers.saveClientEditing(editedClient);
     if (edit) {
       localStorage.setItem("userInfo", JSON.stringify(editedClient));
       setUserInfo(editedClient);
+      setSnackbar({ open: true, message: "הפרטים נשמרו בהצלחה", severity: "success" });
+    } else {
+      setSnackbar({ open: true, message: "שגיאה בשמירת הפרטים", severity: "error" });
     }
     setIsEditing(false);
   };
@@ -52,50 +57,44 @@ function Profile({ client, closeProfile, role }) {
     const emailVerification = await apiCustomers.fetchEmailVerification(
       client.fullName,
       userId
-    ); // שליחת האימייל לאימות
-    console.log(emailVerification.success);
+    );
     if (emailVerification?.success) {
       setIfSendedEmail(true);
+      setSnackbar({ open: true, message: "אימייל לאימות נשלח בהצלחה", severity: "success" });
     } else {
-      alert("שגיאה בשליחת האימייל");
+      setSnackbar({ open: true, message: "שגיאה בשליחת האימייל", severity: "error" });
     }
   };
 
   const handleVerifyTempPassword = async () => {
-    const tempPasswordVerification = await apiCustomers.verifyTempPassword(
-      userId,
-      tempPassword
-    )
-    console.log(tempPasswordVerification);
-    
-    if(tempPasswordVerification.success){
+    const tempPasswordVerification = await apiCustomers.verifyTempPassword(userId, tempPassword);
+    if (tempPasswordVerification.success) {
       setVerifiedTempPassword(true);
-      alert("סיסמה זמנית אומתה בהצלחה!");
-    }
-     else {
-      alert("הסיסמה הזמנית שגויה, נסה שנית.");
+      setSnackbar({ open: true, message: "הסיסמה הזמנית אומתה בהצלחה!", severity: "success" });
+    } else {
+      setSnackbar({ open: true, message: "הסיסמה הזמנית שגויה, נסה שנית.", severity: "error" });
     }
   };
 
   const handlePasswordSubmit = async () => {
-    
     if (newPassword !== confirmPassword) {
-      alert("הסיסמות לא תואמות.");
+      setSnackbar({ open: true, message: "הסיסמאות אינן תואמות.", severity: "error" });
       return;
     }
 
-    const updateResponse = await apiCustomers.updatePassword(userId,oldPassword, newPassword);
-    console.log(updateResponse);
-    
+    const updateResponse = await apiCustomers.updatePassword(userId, oldPassword, newPassword);
     if (updateResponse.success) {
-      alert("הסיסמה שונתה בהצלחה!");
+      setSnackbar({ open: true, message: "הסיסמה שונתה בהצלחה!", severity: "success" });
       setNewPassword("");
       setOldPassword("");
       setTempPassword("");
       setVerifiedTempPassword(false);
       setIfSendedEmail(false);
-    } else {
-      alert("שגיאה בעדכון הסיסמה");
+    }else if(updateResponse.status === 401){
+      setSnackbar({ open: true, message: "הסיסמה הישנה שגויה, נסה שנית.", severity: "error" });
+    } 
+    else {
+      setSnackbar({ open: true, message: "שגיאה בעדכון הסיסמה", severity: "error" });
     }
   };
 
@@ -105,22 +104,38 @@ function Profile({ client, closeProfile, role }) {
     setTempPassword("");
     setVerifiedTempPassword(false);
     setIfSendedEmail(false);
+  };
 
+  const handleSnackbarClose = () => {
+    setSnackbar({ open: false, message: "", severity: "" });
   };
 
   return (
-    <Paper
-      sx={{
-        padding: 3,
-        width: "400px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        borderRadius: 2,
-        boxShadow: 3,
-      }}
-      elevation={6}
-    >
+    <>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleSnackbarClose} severity={snackbar.severity} sx={{ width: "100%" }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+
+      <Paper
+        sx={{
+          padding: 3,
+          width: "400px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          borderRadius: 2,
+          boxShadow: 3,
+        }}
+        elevation={6}
+      >
+
       
       {!ifSendedEmail && !verifiedTempPassword && role === "customer" && <Typography variant="h6" sx={{ textAlign: "center", fontWeight: "bold" }}>
         פרטי הלקוח
@@ -313,6 +328,7 @@ function Profile({ client, closeProfile, role }) {
         )}
       </Box>
     </Paper>
+    </>
   );
 }
 

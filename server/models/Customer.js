@@ -225,7 +225,7 @@ const queryVerifyTempPassword = async (userId, tempPassword) => {
   try {
     // קבלת הסיסמה הזמנית וזמן תפוגה מה-DB
     const result = await query(
-      "SELECT temporaryPassword, expirationTime FROM temporary_passwords WHERE userId = ?",
+      "SELECT temporaryPassword, expirationTime FROM temporary_passwords WHERE userId = ? ORDER BY expirationTime DESC LIMIT 1",
       [userId]
     );
 
@@ -267,7 +267,7 @@ const queryVerifyOldPassword = async (userId, password) => {
   console.log("userId", userId, "password", password);
 
   try {
-    const result = await query("SELECT password FROM customers WHERE id = ?", [
+    const result = await query("SELECT password FROM customers WHERE id = ? ", [
       userId,
     ]);
     const hashedPassword = result[0].password;

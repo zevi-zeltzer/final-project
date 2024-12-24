@@ -34,10 +34,7 @@ function PhotographerHome() {
     navigate("/login");
   };
 
-  const handleClients = () => {
-    navigate("/photographer/home/clients");
-  };
-
+  
   useEffect(() => {
     navigate("/photographer/home/clients");
   }, []);
@@ -129,13 +126,16 @@ function PhotographerHome() {
           vertical: "top",
           horizontal: "center", // ממורכז למסכים קטנים
         }}
-        PaperProps={{
-          style: {
+        slotProps={{
+          paper: {
+            style: {
             borderRadius: "8px",
             minWidth: "280px", // מינימום רוחב למסכים קטנים
             maxWidth: "90vw", // 90% מרוחב המסך
             overflow: "auto", // גלילה במקרה של תוכן גדול
           },
+          }
+          
         }}
       >
         <Box sx={{ padding: 2 }}>

@@ -13,6 +13,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
@@ -33,12 +35,15 @@ function PhotosPhotographer() {
   const [imagesId, setImagesId] = useState([]);
   const [imagesChecked, setImagesChecked] = useState([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // לניהול הדיאלוג
-  const [imageToDelete, setImageToDelete] = useState(null); // שמירת המידע על התמונה למחיקה
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [imageToDelete, setImageToDelete] = useState(null);
   const [ifImagesSelected, setIfImagesSelected] = useState(false);
   const [tempImagesNames, setTempImagesNames] = useState([]);
   const [tempImagesPath, setTempImagesPath] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   useEffect(() => {
     if (!client) return;
@@ -107,7 +112,10 @@ function PhotosPhotographer() {
           folderId,
           folderName
         );
+
         if (imageUploaded) {
+          setSnackbarMessage("התמונה נשלחה בהצלחה!");
+          setSnackbarSeverity("success");
           setImagesPath((prevImagesPath) => [
             ...prevImagesPath,
             imageUploaded.path,
@@ -117,21 +125,26 @@ function PhotosPhotographer() {
             imageUploaded.name,
           ]);
         } else {
-          console.error("שגיאה בהעלאת התמונה");
+          setSnackbarMessage("שגיאה בהעלאת התמונה");
+          setSnackbarSeverity("error");
         }
       } catch (error) {
         console.error(error);
+        setSnackbarMessage("שגיאה בהעלאת התמונה");
+        setSnackbarSeverity("error");
+      } finally {
+        setSnackbarOpen(true);
       }
     }
   };
 
   const openDeleteImageDialog = (index) => {
-    setImageToDelete(index); // שמירת המידע על התמונה למחיקה
-    setOpenDeleteDialog(true); // פתיחת הדיאלוג
+    setImageToDelete(index);
+    setOpenDeleteDialog(true);
   };
 
   const closeDeleteImageDialog = () => {
-    setOpenDeleteDialog(false); // סגירת הדיאלוג
+    setOpenDeleteDialog(false);
     setImageToDelete(null);
   };
 
@@ -148,15 +161,21 @@ function PhotosPhotographer() {
         folderId
       );
       if (response.success) {
+        setSnackbarMessage("התמונה נמחקה בהצלחה!");
+        setSnackbarSeverity("success");
         setImagesPath((prev) => prev.filter((_, i) => i !== imageToDelete));
         setImagesName((prev) => prev.filter((_, i) => i !== imageToDelete));
       } else {
-        console.error("שגיאה במחיקת התמונה");
+        setSnackbarMessage("שגיאה במחיקת התמונה");
+        setSnackbarSeverity("error");
       }
     } catch (error) {
       console.error(error);
+      setSnackbarMessage("שגיאה במחיקת התמונה");
+      setSnackbarSeverity("error");
     } finally {
       closeDeleteImageDialog();
+      setSnackbarOpen(true);
     }
   };
 
@@ -325,6 +344,20 @@ function PhotosPhotographer() {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

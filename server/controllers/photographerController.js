@@ -162,7 +162,7 @@ const foldersUpload = async (req, res) => {
       }
     });
   } else {
-    res.status(404).json({ message: "בעיות במסד הנתונים!!" });
+    res.status(404).json({ message: DBSaveFolder.message });
   }
 };
 

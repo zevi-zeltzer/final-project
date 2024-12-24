@@ -267,7 +267,7 @@ function CustomerHome() {
                     display: { xs: "none", md: "block" }, // הכיתוב מוסתר במסכים קטנים
                   }}
                 >
-                  מספר התמונות שנבחרו בכללי:
+                  מספר התמונות שנבחרו :
                 </Box>
                 <Box
                   sx={{

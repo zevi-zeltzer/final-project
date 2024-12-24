@@ -13,14 +13,7 @@ const fetchLogin = async (username, password) => {
     );
     console.log(response.status);
 
-    if (response.status === 401) {
-      alert("שם משתמש או סיסמה לא נכונים");
-      throw new Error("שם משתמש או סיסמה לא נכונים");
-    }
-
-    if (!response.ok) {
-      throw new Error("שגיאה בכניסה");
-    }
+    
 
     const data = await response.json();
     sessionStorage.setItem("token", data.token);
@@ -124,12 +117,6 @@ const fetchFoldersUpload = async (formData, client, folderName) => {
     const result = await response.json();
     
 
-    if (response.ok) {
-      alert("התייקיה נשלחה בהצלחה!");
-    } else {
-      // הצגת הודעת שגיאה מהשרת אם קיימת, אחרת הצגת הודעה כללית
-      alert(result.message || "שגיאה בהעלאת התיקייה: שיש בעיה בשרת");
-    }
     return result;
   } catch (error) {
     console.error(error);
@@ -155,12 +142,6 @@ const fetchImageUpload = async (formData, client, folderId, folderName) => {
     );
     const result = await response.json();
 
-    if (response.ok) {
-      alert("התמונה נשלחה בהצלחה!");
-    } else {
-      // הצגת הודעת שגיאה מהשרת אם קיימת, אחרת הצגת הודעה כללית
-      alert(result.message || "שגיאה בהעלאת התמונה: שיש בעיה בשרת");
-    }
     return result;
   } catch (error) {
     console.error(error);
@@ -193,7 +174,7 @@ const fetchDeleteFolder = async (fullName, folderName, folderId) => {
     if (!response.ok) {
       throw new Error("שגיאה במחיקת התיקייה");
     }
-    return response.json();
+    return data;
   } catch (error) {
     console.error(error);
   }

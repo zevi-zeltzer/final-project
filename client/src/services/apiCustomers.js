@@ -19,18 +19,10 @@ const fetchRegister = async (username, password, email, phone, fullName) => {
     const data = await response.json();
 
    
-    if (response.ok) {
-      alert("ההרשמה בוצעה בהצלחה!");
-    } else {
-      // הצגת הודעת שגיאה מהשרת אם קיימת, אחרת הצגת הודעה כללית
-      alert(
-       "שגיאה בהרשמה: שם המשתמש כבר קיים או שיש בעיה בשרת"
-      );
-    }
-    return response;
+   
+    return data;
   } catch (error) {
     console.error(error);
-    alert("אירעה שגיאה בביצוע ההרשמה. אנא נסה שוב מאוחר יותר.");
   }
 };
 
@@ -234,10 +226,6 @@ const updatePassword = async (userId,oldPassword, newPassword) => {
         },
       }
     );
-    if(response.status === 401){
-      alert("הסיסמה הישנה שגויה.");
-      return;
-    }
     if (!response.ok) {
       throw new Error("שגיאה בעדכון הסיסמה");
     }

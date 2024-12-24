@@ -6,6 +6,8 @@ import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Paper from "@mui/material/Paper";
 import Modal from "@mui/material/Modal";
+import Snackbar from "@mui/material/Snackbar";
+import MuiAlert from "@mui/material/Alert";
 import apiPhotographer from "../services/apiPhotographer";
 import apiCustomers from "../services/apiCustomers";
 import { jwtDecode } from "jwt-decode";
@@ -26,6 +28,15 @@ function Login() {
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
   const [userId, setUserId] = useState(null);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
+
+  const handleSnackbarClose = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   const showLoginPage = () => {
     navigate("/login");
@@ -44,7 +55,11 @@ function Login() {
     const email = forgotEmailRef.current.value;
 
     if (!username || !email) {
-      alert("אנא מלא שם משתמש ומייל");
+      setSnackbar({
+        open: true,
+        message: "אנא מלא שם משתמש ומייל",
+        severity: "warning",
+      });
       return;
     }
 
@@ -54,55 +69,97 @@ function Login() {
 
       if (response.success) {
         setUserId(response.userId);
-        alert("הסיסמה נשלחה למייל שלך.");
-        setIsTemporaryPasswordSent(true); // עדכון ה-state שהסיסמה נשלחה
+        setSnackbar({
+          open: true,
+          message: "הסיסמה נשלחה למייל שלך.",
+          severity: "success",
+        });
+        setIsTemporaryPasswordSent(true);
       } else {
-        alert("שגיאה באימות פרטים. נסה שוב.");
+        setSnackbar({
+          open: true,
+          message: "שגיאה באימות פרטים. נסה שוב.",
+          severity: "error",
+        });
       }
     } catch (error) {
       console.error(error);
-      alert("אירעה שגיאה בעת שליחת הבקשה. נסה שוב מאוחר יותר.");
+      setSnackbar({
+        open: true,
+        message: "אירעה שגיאה בעת שליחת הבקשה. נסה שוב מאוחר יותר.",
+        severity: "error",
+      });
     }
   };
 
   const handleVerifyTemporaryPassword = async () => {
-    console.log("temporaryPassword", temporaryPassword,"userId", userId);
-    
+    console.log("temporaryPassword", temporaryPassword, "userId", userId);
+
     try {
-      const response = await apiCustomers.verifyTempPassword(userId, temporaryPassword);
+      const response = await apiCustomers.verifyTempPassword(
+        userId,
+        temporaryPassword
+      );
       console.log("response", response);
-      
 
       if (response.success) {
         setIsTemporaryPasswordVerified(true);
-        alert(response.message);
+        setSnackbar({
+          open: true,
+          message: response.message,
+          severity: "success",
+        });
       } else {
-        alert(  response.message);
+        setSnackbar({
+          open: true,
+          message: response.message,
+          severity: "error",
+        });
       }
     } catch (error) {
       console.error(error);
-      alert("אירעה שגיאה, אנא נסה שוב מאוחר יותר.");
+      setSnackbar({
+        open: true,
+        message: "אירעה שגיאה, אנא נסה שוב מאוחר יותר.",
+        severity: "error",
+      });
     }
   };
 
   const handleUpdatePassword = async () => {
     if (newPassword !== newPasswordConfirm) {
-      alert("הסיסמאות לא תואמות. נסה שוב.");
+      setSnackbar({
+        open: true,
+        message: "הסיסמאות לא תואמות. נסה שוב.",
+        severity: "warning",
+      });
       return;
     }
 
     try {
-      const response = await apiCustomers.changePassword( userId, newPassword);
+      const response = await apiCustomers.changePassword(userId, newPassword);
 
       if (response.success) {
-        alert("הסיסמה עודכנה בהצלחה.");
-        setForgotPasswordModalOpen(false); // סוגרים את המודל
+        setSnackbar({
+          open: true,
+          message: "הסיסמה עודכנה בהצלחה.",
+          severity: "success",
+        });
+        setForgotPasswordModalOpen(false);
       } else {
-        alert("אירעה שגיאה בעדכון הסיסמה. נסה שוב.");
+        setSnackbar({
+          open: true,
+          message: "אירעה שגיאה בעדכון הסיסמה. נסה שוב.",
+          severity: "error",
+        });
       }
     } catch (error) {
       console.error(error);
-      alert("אירעה שגיאה, אנא נסה שוב מאוחר יותר.");
+      setSnackbar({
+        open: true,
+        message: "אירעה שגיאה, אנא נסה שוב מאוחר יותר.",
+        severity: "error",
+      });
     }
   };
 
@@ -114,6 +171,7 @@ function Login() {
       const data = await apiPhotographer.fetchLogin(username, password);
       const token = data.token;
       if (token) {
+        setSnackbar({ open: true, message: "התחברת בהצלחה", severity: "success" });
         const user = jwtDecode(token);
         if (user.role === "admin") {
           showAdminDashboard();
@@ -121,6 +179,7 @@ function Login() {
           showCustomerDashboard(data.userInfo.fullName);
         }
       } else {
+        setSnackbar({ open: true, message: data.message, severity: "error" });
         showLoginPage();
       }
     } catch (error) {
@@ -128,12 +187,12 @@ function Login() {
     }
   };
 
-  const handleCancellation  = () => {
+  const handleCancellation = () => {
     setForgotPasswordModalOpen(false);
     setIsTemporaryPasswordSent(false);
-    setTemporaryPassword('');
+    setTemporaryPassword("");
     setIsTemporaryPasswordVerified(false);
-  }
+  };
 
   return (
     <Box
@@ -158,8 +217,8 @@ function Login() {
           backgroundSize: "100% 100%",
           backgroundPosition: "center",
           backgroundRepeat: "no-repeat",
-          filter: "brightness(0.7)", // עמעום התמונה
-          zIndex: -1, // להציב את התמונה מתחת לתוכן
+          filter: "brightness(0.7)",
+          zIndex: -1,
         }}
       />
 
@@ -212,7 +271,6 @@ function Login() {
             כניסה
           </Button>
         </Box>
-        {/* קישור לשחזור סיסמה */}
         <Button
           variant="text"
           color="secondary"
@@ -224,7 +282,6 @@ function Login() {
         </Button>
       </Paper>
 
-      {/* מודל שחזור סיסמה */}
       <Modal
         open={forgotPasswordModalOpen}
         onClose={() => setForgotPasswordModalOpen(false)}
@@ -292,7 +349,6 @@ function Login() {
             </>
           )}
 
-          {/* שלב הכנסת סיסמה זמנית */}
           {isTemporaryPasswordSent && !isTemporaryPasswordVerified && (
             <>
               <Typography
@@ -333,7 +389,6 @@ function Login() {
             </>
           )}
 
-          {/* שלב הכנסת סיסמה חדשה */}
           {isTemporaryPasswordVerified && (
             <>
               <Typography
@@ -385,6 +440,22 @@ function Login() {
           )}
         </Box>
       </Modal>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <MuiAlert
+          onClose={handleSnackbarClose}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 }

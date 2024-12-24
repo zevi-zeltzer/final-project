@@ -3,6 +3,8 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 import { useNavigate } from "react-router-dom";
 import apiCustomers from "../services/apiCustomers";
 
@@ -14,6 +16,7 @@ function Register() {
   const [fullName, setFullName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
   const navigate = useNavigate();
 
@@ -26,14 +29,20 @@ function Register() {
       password.length > 20 ||
       password.search(/[a-z]/i) < 0
     ) {
-      setError(
-        "Password must be between 6 and 20 characters and contain at least one letter"
-      );
+      setSnackbar({
+        open: true,
+        message: "Password must be between 6 and 20 characters and contain at least one letter",
+        severity: "error",
+      });
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setSnackbar({
+        open: true,
+        message: "Passwords do not match",
+        severity: "error",
+      });
       return;
     }
 
@@ -46,24 +55,42 @@ function Register() {
         fullName
       );
 
-      console.log(data);
-
       if (data.status === 200) {
+        setSnackbar({
+          open: true,
+          message: "ההרשמה בוצעה בהצלחה!",
+          severity: "success",
+        });
         navigate("/login");
       } else if (data.status === 409) {
-        setError("שם המשתמש כבר קיים");
-      }
-      else {
-        setError("שגיאה בהרשמה: שם המשתמש כבר קיים או שיש בעיה בשרת");
+        setSnackbar({
+          open: true,
+          message: "שם המשתמש כבר קיים",
+          severity: "error",
+        });
+      } else {
+        setSnackbar({
+          open: true,
+          message: "שגיאה בהרשמה: שם המשתמש כבר קיים או שיש בעיה בשרת",
+          severity: "error",
+        });
       }
     } catch (error) {
       console.error(error);
+      setSnackbar({
+        open: true,
+        message: "אירעה שגיאה בביצוע ההרשמה. אנא נסה שוב מאוחר יותר.",
+        severity: "error",
+      });
     }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
 
   return (
     <Box className="register" dir="rtl" sx={{ maxWidth: 400, margin: "auto", padding: 3 }}>
-      {/* Adding Logo */}
       <Box sx={{ textAlign: "center", marginBottom: 2 }}>
         <img src="/images/logo.jpg" alt="Logo" style={{ maxWidth: "100%", height: "auto" }} />
       </Box>
@@ -151,6 +178,20 @@ function Register() {
           {error}
         </Typography>
       )}
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

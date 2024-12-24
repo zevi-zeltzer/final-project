@@ -12,6 +12,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  CircularProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -28,6 +31,12 @@ function ClientGallery() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false); // ניהול פתיחת הדיאלוג
   const [folderToDelete, setFolderToDelete] = useState(null); // שמירת תיקייה למחיקה
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "info",
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -79,7 +88,12 @@ function ClientGallery() {
     arrEndFolders
   );
 
+  const handleCloseSnackbar = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
+
   const handleFolderUpload = async (event) => {
+    setUploading(true);
     const folder = event.target.files;
     console.log(folder);
 
@@ -96,25 +110,36 @@ function ClientGallery() {
     });
 
     try {
-      // שליחה לשרת להעלאת התיקיות
       const foldersUploaded = await apiPhotographer.fetchFoldersUpload(
         formData,
         client,
         folderName
       );
-      console.log(foldersUploaded);
-      if (!foldersUploaded) {
+      if (!foldersUploaded.folderId) {
         console.error("שגיאה בהעלאת התיקיות");
+        setSnackbar({
+          open: true,
+          message: "שגיאה בהעלאת התיקיות. אנא נסה שוב.",
+          severity: "error",
+        });
       } else {
-        // עדכון ה-state באופן ישיר
-        setFoldersName((prevFolders) => [...prevFolders, folderName]); // הוספת תיקייה חדשה ל-state
-        setFoldersId((prevIds) => [
-          ...prevIds,
-          foldersUploaded.folderId[0], // הוספת מזהה התיקייה ל-state
-        ]);
+        setFoldersName((prevFolders) => [...prevFolders, folderName]);
+        setFoldersId((prevIds) => [...prevIds, foldersUploaded.folderId[0]]);
+        setSnackbar({
+          open: true,
+          message: "התיקייה הועלתה בהצלחה!",
+          severity: "success",
+        });
       }
     } catch (error) {
       console.error(error);
+      setSnackbar({
+        open: true,
+        message: "שגיאה בהעלאה. אנא בדוק את חיבור האינטרנט שלך.",
+        severity: "error",
+      });
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -166,19 +191,34 @@ function ClientGallery() {
         folderName,
         foldersId[index]
       );
-      console.log("response.success", response.success);
-
+       console.log("response", response);
+       
       if (!response.success) {
         console.error("שגיאה במחיקת התיקייה");
-        // שחזור התיקייה במקרה של שגיאה
+        setSnackbar({
+          open: true,
+          message: "שגיאה במחיקת התיקייה. אנא נסה שוב.",
+          severity: "error",
+        });
         setFoldersName((prev) => [
           ...prev.slice(0, index),
           folderName,
           ...prev.slice(index),
         ]);
+      } else {
+        setSnackbar({
+          open: true,
+          message: "התיקייה נמחקה בהצלחה!",
+          severity: "success",
+        });
       }
     } catch (error) {
       console.error(error);
+      setSnackbar({
+        open: true,
+        message: "שגיאה ברשת. לא ניתן היה למחוק את התיקייה.",
+        severity: "error",
+      });
     }
   };
 
@@ -199,18 +239,46 @@ function ClientGallery() {
           webkitdirectory="true"
         />
         <label htmlFor="file-upload">
-        <Button
-          variant="outlined"
-          color="secondary"
-          onClick={() => navigate("/photographer/home/clients")}
-          
-        >
-          חזרה ללקוחות
-        </Button>
-          <Button variant="contained" component="span" color="primary" sx={{ marginRight: 2 }}>
+          <Button
+            variant="outlined"
+            color="secondary"
+            onClick={() => navigate("/photographer/home/clients")}
+          >
+            חזרה ללקוחות
+          </Button>
+          <Button
+            variant="contained"
+            component="span"
+            color="primary"
+            sx={{ marginRight: 2 }}
+          >
             העלאת תיקיות
           </Button>
         </label>
+        {uploading && (
+          <Box
+            sx={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.5)", // רקע שחור שקוף
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 9999, // קדימות גבוהה
+              backdropFilter: "blur(5px)", // טשטוש הרקע
+            }}
+          >
+            <Box sx={{ textAlign: "center", color: "white" }}>
+              <CircularProgress color="inherit" />
+              <Typography variant="h6" sx={{ marginTop: 2 }}>
+                מעלה...
+              </Typography>
+            </Box>
+          </Box>
+        )}
       </Box>
 
       <Grid container spacing={3}>
@@ -313,6 +381,20 @@ function ClientGallery() {
           </Button>
         </DialogActions>
       </Dialog>
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000} // משך הזמן שההודעה מופיעה
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
